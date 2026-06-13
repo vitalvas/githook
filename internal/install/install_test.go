@@ -55,6 +55,32 @@ func TestInstallAndUninstallRepo(t *testing.T) {
 	})
 }
 
+func TestUninstallRemovesNewlyAddedHooks(t *testing.T) {
+	initRepo(t)
+	binary := fakeBinary(t)
+
+	dir, err := Install(binary, false)
+	require.NoError(t, err)
+
+	// Guards that the hooks added after the initial 14 are both installed and
+	// removed; the generic loop tests would not flag their accidental removal
+	// from the managed list.
+	added := []string{"pre-merge-commit", "sendemail-validate", "post-update"}
+	for _, name := range added {
+		target, err := os.Readlink(filepath.Join(dir, name))
+		require.NoError(t, err, "hook %s should be installed", name)
+		assert.Equal(t, binary, target)
+	}
+
+	_, err = Uninstall(binary, false)
+	require.NoError(t, err)
+
+	for _, name := range added {
+		_, err := os.Lstat(filepath.Join(dir, name))
+		assert.True(t, os.IsNotExist(err), "hook %s should be removed", name)
+	}
+}
+
 func TestInstallOverwritesExisting(t *testing.T) {
 	initRepo(t)
 	binary := fakeBinary(t)
