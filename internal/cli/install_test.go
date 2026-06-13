@@ -12,5 +12,5 @@ func TestInstallCommand(t *testing.T) {
 
 	out, err := runCmd(t, "install")
 	require.NoError(t, err)
-	assert.Contains(t, out, "Installed 14 hooks")
+	assert.Contains(t, out, "Installed 17 hooks")
 }

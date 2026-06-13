@@ -28,7 +28,7 @@ func TestIsHookName(t *testing.T) {
 }
 
 func TestNamesCoversAllManagedHooks(t *testing.T) {
-	assert.Len(t, Names, 14)
+	assert.Len(t, Names, 17)
 
 	seen := make(map[string]struct{}, len(Names))
 	for _, n := range Names {

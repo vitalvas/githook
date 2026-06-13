@@ -6,7 +6,7 @@ through a symlink named after a git hook, it runs that hook; when invoked as
 
 ## How it works
 
-`githook install` creates one symlink for each of the 14 supported git hooks in
+`githook install` creates one symlink for each of the 17 supported git hooks in
 the target hooks directory. Every symlink points back at the `githook` binary.
 When git fires a hook, it executes the symlink, and `githook` detects which hook
 to run from the name it was invoked as (`os.Args[0]`) — the same mechanism
@@ -34,13 +34,20 @@ rule opts out with `allow_failure`.
 
 ## Supported hooks
 
-All 14 standard git hooks are managed:
+17 git hooks are managed:
 
 | Client-side | Server-side |
 | --- | --- |
 | `applypatch-msg`, `pre-applypatch`, `post-applypatch` | `pre-receive` |
-| `pre-commit`, `prepare-commit-msg`, `commit-msg`, `post-commit` | `update` |
-| `pre-rebase`, `post-checkout`, `post-merge`, `pre-push` | `post-receive` |
+| `pre-commit`, `pre-merge-commit`, `prepare-commit-msg` | `update` |
+| `commit-msg`, `post-commit`, `pre-rebase` | `post-receive` |
+| `post-checkout`, `post-merge`, `pre-push`, `sendemail-validate` | `post-update` |
+
+Only hooks whose contract is "run and check the exit status" are managed. Hooks
+that git invokes with a special protocol or that override git's own behaviour are
+deliberately excluded, because a no-op symlink to this binary would break them:
+`push-to-checkout` (replaces the built-in checkout), `proc-receive` (pkt-line
+protocol), and `fsmonitor-watchman` (emits the changed file list on stdout).
 
 ## Built-in handlers
 
