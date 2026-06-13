@@ -1,0 +1,10 @@
+# Compiled binary
+/githook
+
+# Test and coverage artifacts
+*.out
+*.test
+coverage.txt
+
+# Local scratch directory
+/.tmp/
