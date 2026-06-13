@@ -16,7 +16,7 @@ func TestHandlerFor(t *testing.T) {
 	})
 
 	t.Run("returns noop for unregistered hook", func(t *testing.T) {
-		err := HandlerFor("pre-commit")(&Context{Hook: "pre-commit"})
+		err := HandlerFor("post-commit")(&Context{Hook: "post-commit"})
 		assert.NoError(t, err)
 	})
 }

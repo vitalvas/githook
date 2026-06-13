@@ -16,7 +16,7 @@ func TestRunHook(t *testing.T) {
 		t.Chdir(t.TempDir())
 
 		var stdout, stderr bytes.Buffer
-		code := runHook("pre-commit", nil, strings.NewReader(""), &stdout, &stderr)
+		code := runHook("post-merge", nil, strings.NewReader(""), &stdout, &stderr)
 		assert.Equal(t, 0, code)
 		assert.Empty(t, stderr.String())
 	})
@@ -57,7 +57,7 @@ func TestRunAsHookName(t *testing.T) {
 	t.Chdir(t.TempDir())
 	oldArgs := os.Args
 	t.Cleanup(func() { os.Args = oldArgs })
-	os.Args = []string{"/somewhere/pre-commit"}
+	os.Args = []string{"/somewhere/post-merge"}
 
 	assert.Equal(t, 0, Run())
 }

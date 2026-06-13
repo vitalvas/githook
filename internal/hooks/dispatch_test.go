@@ -34,10 +34,10 @@ func TestDispatch(t *testing.T) {
 		dir := t.TempDir()
 		t.Chdir(dir)
 		marker := filepath.Join(dir, "ran")
-		writeConfig(t, dir, fmt.Sprintf("hooks:\n  pre-commit:\n    - run: touch %s\n", marker))
+		writeConfig(t, dir, fmt.Sprintf("hooks:\n  post-merge:\n    - run: touch %s\n", marker))
 
 		var stderr bytes.Buffer
-		err := Dispatch(&Context{Hook: "pre-commit", Stdout: &bytes.Buffer{}, Stderr: &stderr})
+		err := Dispatch(&Context{Hook: "post-merge", Stdout: &bytes.Buffer{}, Stderr: &stderr})
 		require.NoError(t, err)
 		assert.FileExists(t, marker)
 	})
@@ -45,19 +45,19 @@ func TestDispatch(t *testing.T) {
 	t.Run("failing rule aborts the hook", func(t *testing.T) {
 		dir := t.TempDir()
 		t.Chdir(dir)
-		writeConfig(t, dir, "hooks:\n  pre-commit:\n    - name: fail\n      run: exit 3\n")
+		writeConfig(t, dir, "hooks:\n  post-merge:\n    - name: fail\n      run: exit 3\n")
 
-		err := Dispatch(&Context{Hook: "pre-commit", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
+		err := Dispatch(&Context{Hook: "post-merge", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
 		assert.ErrorContains(t, err, "fail")
 	})
 
 	t.Run("allow_failure lets the hook pass", func(t *testing.T) {
 		dir := t.TempDir()
 		t.Chdir(dir)
-		writeConfig(t, dir, "hooks:\n  pre-commit:\n    - run: exit 1\n      allow_failure: true\n")
+		writeConfig(t, dir, "hooks:\n  post-merge:\n    - run: exit 1\n      allow_failure: true\n")
 
 		var stderr bytes.Buffer
-		err := Dispatch(&Context{Hook: "pre-commit", Stdout: &bytes.Buffer{}, Stderr: &stderr})
+		err := Dispatch(&Context{Hook: "post-merge", Stdout: &bytes.Buffer{}, Stderr: &stderr})
 		require.NoError(t, err)
 		assert.Contains(t, stderr.String(), "ignored")
 	})
@@ -79,7 +79,7 @@ func TestDispatch(t *testing.T) {
 		dir := t.TempDir()
 		t.Chdir(dir)
 
-		err := Dispatch(&Context{Hook: "pre-commit", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
+		err := Dispatch(&Context{Hook: "post-merge", Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
 		assert.NoError(t, err)
 	})
 }

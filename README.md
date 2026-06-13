@@ -42,6 +42,36 @@ All 14 standard git hooks are managed:
 | `pre-commit`, `prepare-commit-msg`, `commit-msg`, `post-commit` | `update` |
 | `pre-rebase`, `post-checkout`, `post-merge`, `pre-push` | `post-receive` |
 
+## Built-in handlers
+
+Hooks without a compiled-in handler do nothing by default and act purely as a
+host for config rules. The following hooks ship with built-in behaviour:
+
+### commit-msg
+
+Enforces a single-line conventional-commit policy. The message must:
+
+- follow `<type>: <subject>` or `<type>(<scope>): <subject>`;
+- use an allowed type: `feat`, `fix`, `perf`, `deps`, `revert`, `docs`, `chore`;
+- carry no breaking-change `!` marker;
+- contain only a subject line (no body, no multi-line content);
+- be at most 72 characters for the whole header;
+- have a non-empty subject with no trailing period.
+
+### pre-commit
+
+Runs `yake run` (the project's tests and policy checks) before a commit. When
+`yake` is not found on `PATH` the hook is skipped so commits are not blocked in
+environments without it; when present, a failing run aborts the commit.
+
+The check is bypassed entirely when the file `skip-pre-commit` exists in the git
+directory:
+
+```bash
+touch .git/skip-pre-commit    # disable the pre-commit check
+rm .git/skip-pre-commit       # re-enable it
+```
+
 ## Commands
 
 | Command | Description |
