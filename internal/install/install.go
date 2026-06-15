@@ -31,18 +31,42 @@ func HooksDir(global bool) (string, error) {
 }
 
 // repoHooksDir returns the absolute path to the current repository's hooks
-// directory, honouring an existing core.hooksPath setting.
+// directory. A core.hooksPath set in the repository's local config is honoured
+// (resolved the way git resolves it: relative values are relative to the work
+// tree root). A core.hooksPath inherited from the global or system config is
+// deliberately ignored so that a non-global install always targets this
+// repository rather than a shared directory.
 func repoHooksDir() (string, error) {
-	if path, err := gitConfig("core.hooksPath"); err == nil && path != "" {
-		return absFromGitDir(path)
+	if path, err := gitConfigLocal("core.hooksPath"); err == nil && path != "" {
+		return resolveRepoPath(path)
 	}
 
-	gitDir, err := gitRevParse("--git-path", "hooks")
+	// Resolve the hooks directory from the git directory itself rather than via
+	// "git rev-parse --git-path hooks": that form honours core.hooksPath from any
+	// scope, including the global config, which would redirect a non-global
+	// install away from this repository.
+	gitDir, err := gitRevParse("--absolute-git-dir")
 	if err != nil {
 		return "", err
 	}
 
-	return absFromGitDir(gitDir)
+	return filepath.Join(gitDir, "hooks"), nil
+}
+
+// resolveRepoPath turns a path reported by git into an absolute path. Absolute
+// paths are returned unchanged; relative paths are resolved against the work
+// tree root, matching how git interprets a relative core.hooksPath.
+func resolveRepoPath(path string) (string, error) {
+	if filepath.IsAbs(path) {
+		return path, nil
+	}
+
+	root, err := gitRevParse("--show-toplevel")
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(root, path), nil
 }
 
 // Install creates a symlink for every supported hook in the target directory,
@@ -158,24 +182,14 @@ func gitRevParse(args ...string) (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
-// gitConfig reads a local git config value, returning an empty string when it
-// is unset.
-func gitConfig(key string) (string, error) {
-	out, err := exec.Command("git", "config", "--get", key).Output()
+// gitConfigLocal reads a git config value from the repository's local config
+// only, ignoring values inherited from the global or system config. It returns
+// an empty string when the key is unset locally.
+func gitConfigLocal(key string) (string, error) {
+	out, err := exec.Command("git", "config", "--local", "--get", key).Output()
 	if err != nil {
 		return "", err
 	}
 
 	return strings.TrimSpace(string(out)), nil
-}
-
-// absFromGitDir resolves a path reported by git (which may be relative to the
-// current working directory) to an absolute path.
-func absFromGitDir(path string) (string, error) {
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		return "", fmt.Errorf("resolving hooks directory: %w", err)
-	}
-
-	return abs, nil
 }

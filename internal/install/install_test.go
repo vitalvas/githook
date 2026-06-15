@@ -13,10 +13,13 @@ import (
 )
 
 // initRepo creates a git repository in a temp dir, makes it the working
-// directory for the test, and returns its path.
+// directory for the test, and returns its path. The path is canonicalised with
+// EvalSymlinks so it matches the work tree root git reports (on macOS the temp
+// dir lives under /var, a symlink to /private/var).
 func initRepo(t *testing.T) string {
 	t.Helper()
-	dir := t.TempDir()
+	dir, err := filepath.EvalSymlinks(t.TempDir())
+	require.NoError(t, err)
 	t.Chdir(dir)
 	require.NoError(t, exec.Command("git", "init", "-q", dir).Run())
 	return dir
@@ -121,14 +124,47 @@ func TestUninstallLeavesForeignHooks(t *testing.T) {
 	assert.Equal(t, "keep me", string(data))
 }
 
-func TestHooksDirHonoursCoreHooksPath(t *testing.T) {
+func TestHooksDirHonoursLocalCoreHooksPath(t *testing.T) {
 	dir := initRepo(t)
+	isolateGlobalGit(t)
 	custom := filepath.Join(dir, "custom-hooks")
-	require.NoError(t, exec.Command("git", "config", "core.hooksPath", custom).Run())
+	require.NoError(t, exec.Command("git", "config", "--local", "core.hooksPath", custom).Run())
 
 	got, err := HooksDir(false)
 	require.NoError(t, err)
 	assert.Equal(t, custom, got)
+}
+
+func TestHooksDirIgnoresGlobalCoreHooksPath(t *testing.T) {
+	repo := initRepo(t)
+	isolateGlobalGit(t)
+
+	// A core.hooksPath set globally must NOT redirect a non-global install: the
+	// hooks belong in this repository's .git/hooks, not a shared directory.
+	shared := t.TempDir()
+	require.NoError(t, exec.Command("git", "config", "--global", "core.hooksPath", shared).Run())
+
+	got, err := HooksDir(false)
+	require.NoError(t, err)
+	assert.Equal(t, filepath.Join(repo, ".git", "hooks"), got)
+	assert.NotEqual(t, shared, got)
+}
+
+func TestHooksDirResolvesRelativeLocalHooksPath(t *testing.T) {
+	repo := initRepo(t)
+	isolateGlobalGit(t)
+
+	// A relative core.hooksPath is resolved against the work tree root, the way
+	// git resolves it, regardless of the current working directory.
+	require.NoError(t, exec.Command("git", "config", "--local", "core.hooksPath", "my-hooks").Run())
+
+	sub := filepath.Join(repo, "sub")
+	require.NoError(t, os.MkdirAll(sub, 0o755))
+	t.Chdir(sub)
+
+	got, err := HooksDir(false)
+	require.NoError(t, err)
+	assert.Equal(t, filepath.Join(repo, "my-hooks"), got)
 }
 
 func TestHooksDirOutsideRepo(t *testing.T) {
