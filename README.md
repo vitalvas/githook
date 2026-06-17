@@ -79,6 +79,25 @@ touch .git/skip-pre-commit    # disable the pre-commit check
 rm .git/skip-pre-commit       # re-enable it
 ```
 
+### pre-push and update (new-branch policy)
+
+Both hooks block the creation of new branches unless the file `allow-branches`
+exists in the git directory:
+
+- `pre-push` rejects a push that would create a new branch on the remote.
+- `update` rejects a new branch ref on a repository receiving a push (server
+  side).
+
+Updates to existing branches and branch deletions are never affected; only the
+creation of a new `refs/heads/` ref is gated. Git does not provide a hook for
+local `git branch` / `git switch -c`, so locally created branches are not
+blocked until they are pushed.
+
+```bash
+touch .git/allow-branches    # permit new branches
+rm .git/allow-branches       # block new branches again
+```
+
 ## Commands
 
 | Command | Description |

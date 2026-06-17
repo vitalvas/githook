@@ -66,9 +66,9 @@ func TestDispatch(t *testing.T) {
 		dir := t.TempDir()
 		t.Chdir(dir)
 		out := filepath.Join(dir, "out")
-		writeConfig(t, dir, fmt.Sprintf("hooks:\n  pre-push:\n    - run: printf '%%s' \"$1\" > %s\n", out))
+		writeConfig(t, dir, fmt.Sprintf("hooks:\n  post-merge:\n    - run: printf '%%s' \"$1\" > %s\n", out))
 
-		err := Dispatch(&Context{Hook: "pre-push", Args: []string{"origin"}, Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
+		err := Dispatch(&Context{Hook: "post-merge", Args: []string{"origin"}, Stdout: &bytes.Buffer{}, Stderr: &bytes.Buffer{}})
 		require.NoError(t, err)
 		data, err := os.ReadFile(out)
 		require.NoError(t, err)

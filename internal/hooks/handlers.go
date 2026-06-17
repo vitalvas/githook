@@ -31,6 +31,8 @@ type Handler func(ctx *Context) error
 var builtins = map[string]Handler{
 	"commit-msg": commitMsgHandler,
 	"pre-commit": preCommitHandler,
+	"pre-push":   prePushHandler,
+	"update":     updateHandler,
 }
 
 // HandlerFor returns the built-in handler for the named hook, falling back to a
