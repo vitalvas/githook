@@ -18,6 +18,14 @@ const allowBranchesMarker = "allow-branches"
 // not affected.
 const branchRefPrefix = "refs/heads/"
 
+// defaultBranches are always permitted to be created, even without the
+// allow-branches marker, so that the initial push of a repository is never
+// blocked.
+var defaultBranches = map[string]bool{
+	"main":   true,
+	"master": true,
+}
+
 // branchCreationsAllowed reports whether new branches may be created, which is
 // the case exactly when the allow-branches marker exists in the git directory.
 func branchCreationsAllowed() bool {
@@ -38,11 +46,12 @@ func isZeroOID(oid string) bool {
 }
 
 // newBranchName returns the short branch name and reports true when ref/oid
-// together describe the creation of a new branch: a refs/heads/ ref whose
-// pre-update object id is all zeroes (the branch does not yet exist).
+// together describe the creation of a blockable new branch: a refs/heads/ ref
+// whose pre-update object id is all zeroes (the branch does not yet exist) and
+// which is not one of the always-allowed default branches.
 func newBranchName(ref, oid string) (string, bool) {
 	name, ok := strings.CutPrefix(ref, branchRefPrefix)
-	if !ok || !isZeroOID(oid) {
+	if !ok || !isZeroOID(oid) || defaultBranches[name] {
 		return "", false
 	}
 

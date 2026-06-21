@@ -88,10 +88,12 @@ exists in the git directory:
 - `update` rejects a new branch ref on a repository receiving a push (server
   side).
 
+The default branches `main` and `master` are always allowed to be created, even
+without the marker, so the initial push of a repository is never blocked.
 Updates to existing branches and branch deletions are never affected; only the
-creation of a new `refs/heads/` ref is gated. Git does not provide a hook for
-local `git branch` / `git switch -c`, so locally created branches are not
-blocked until they are pushed.
+creation of a new, non-default `refs/heads/` ref is gated. Git does not provide
+a hook for local `git branch` / `git switch -c`, so locally created branches are
+not blocked until they are pushed.
 
 ```bash
 touch .git/allow-branches    # permit new branches

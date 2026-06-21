@@ -63,6 +63,13 @@ func TestNewBranchName(t *testing.T) {
 		_, isNew := newBranchName("refs/tags/v1", zeroSHA1)
 		assert.False(t, isNew)
 	})
+
+	t.Run("default branches are never blockable", func(t *testing.T) {
+		for _, ref := range []string{"refs/heads/main", "refs/heads/master"} {
+			_, isNew := newBranchName(ref, zeroSHA1)
+			assert.False(t, isNew, "%s should be exempt", ref)
+		}
+	})
 }
 
 func TestPrePushHandler(t *testing.T) {
@@ -79,6 +86,14 @@ func TestPrePushHandler(t *testing.T) {
 		assert.ErrorContains(t, err, "blocked")
 		// The bypass marker must not be advertised in the user-facing message.
 		assert.NotContains(t, err.Error(), allowBranchesMarker)
+	})
+
+	t.Run("allows pushing a new default branch without marker", func(t *testing.T) {
+		blockBranches(t)
+		for _, ref := range []string{"refs/heads/main", "refs/heads/master"} {
+			ctx, _ := newCtx(pushLine(ref, someOID, ref, zeroSHA1))
+			assert.NoError(t, prePushHandler(ctx), "%s should be allowed", ref)
+		}
 	})
 
 	t.Run("allows updating an existing branch", func(t *testing.T) {
@@ -138,6 +153,12 @@ func TestUpdateHandler(t *testing.T) {
 		assert.ErrorContains(t, err, "feature")
 		assert.ErrorContains(t, err, "blocked")
 		assert.NotContains(t, err.Error(), allowBranchesMarker)
+	})
+
+	t.Run("allows creating a default branch without marker", func(t *testing.T) {
+		blockBranches(t)
+		assert.NoError(t, updateHandler(newCtx("refs/heads/main", zeroSHA1, someOID)))
+		assert.NoError(t, updateHandler(newCtx("refs/heads/master", zeroSHA1, someOID)))
 	})
 
 	t.Run("allows updating an existing branch", func(t *testing.T) {
