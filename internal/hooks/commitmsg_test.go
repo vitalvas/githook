@@ -22,7 +22,7 @@ func TestValidateCommitMessage(t *testing.T) {
 		{name: "chore type", msg: "chore: tidy module"},
 		{name: "exclamation in subject is allowed", msg: "fix: handle it now!"},
 		{name: "scope with special chars", msg: "fix(commit-msg/v2): something"},
-		{name: "exactly 72 chars", msg: fmt.Sprintf("feat: %s", strings.Repeat("a", 66))},
+		{name: "subject exactly 72 chars", msg: fmt.Sprintf("feat: %s", strings.Repeat("a", 72))},
 		{name: "trailing newline ignored", msg: "feat: add thing\n"},
 	}
 
@@ -50,7 +50,7 @@ func TestValidateCommitMessage(t *testing.T) {
 		{name: "empty scope", msg: "feat(): add thing", wantErr: "must follow"},
 		{name: "empty subject", msg: "feat: ", wantErr: "must follow"},
 		{name: "trailing period", msg: "feat: add thing.", wantErr: "period"},
-		{name: "subject too long", msg: fmt.Sprintf("feat: %s", strings.Repeat("a", 67)), wantErr: "at most 72"},
+		{name: "subject too long", msg: fmt.Sprintf("feat: %s", strings.Repeat("a", 73)), wantErr: "at most 72"},
 		{name: "has body", msg: "feat: add thing\n\nthis is a body", wantErr: "only a subject"},
 		{name: "multiline subject", msg: "feat: add thing\nmore text", wantErr: "only a subject"},
 	}

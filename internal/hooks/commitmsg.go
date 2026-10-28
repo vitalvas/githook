@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// maxSubjectLength is the maximum allowed length of the commit header line
-// (type, optional scope, ": ", and subject combined).
+// maxSubjectLength is the maximum allowed length of the subject text alone
+// (excluding the type, optional scope, and ": " prefix).
 const maxSubjectLength = 72
 
 // allowedTypes are the conventional-commit types githook accepts.
@@ -33,10 +33,6 @@ func validateCommitMessage(message string) error {
 		return err
 	}
 
-	if len(header) > maxSubjectLength {
-		return fmt.Errorf("subject must be at most %d characters, got %d", maxSubjectLength, len(header))
-	}
-
 	if hasBreakingChangeMarker(header) {
 		return fmt.Errorf("breaking change marker %q is not allowed", "!")
 	}
@@ -47,6 +43,10 @@ func validateCommitMessage(message string) error {
 	}
 
 	commitType, subject := groups[1], groups[3]
+
+	if len(subject) > maxSubjectLength {
+		return fmt.Errorf("subject must be at most %d characters, got %d", maxSubjectLength, len(subject))
+	}
 
 	if !isAllowedType(commitType) {
 		return fmt.Errorf("type %q is not allowed; use one of: %s", commitType, strings.Join(allowedTypes, ", "))
