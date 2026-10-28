@@ -2,6 +2,8 @@ package cli
 
 import (
 	"bytes"
+	"context"
+	"os"
 	"os/exec"
 	"testing"
 
@@ -18,17 +20,16 @@ func initRepo(t *testing.T) string {
 	return dir
 }
 
-// runCmd builds the root command, runs it with the given args, and returns its
+// runCmd builds the root parser, runs it with the given args, and returns its
 // combined output.
 func runCmd(t *testing.T, args ...string) (string, error) {
 	t.Helper()
-	root := newRootCmd()
 	var out bytes.Buffer
-	root.SetOut(&out)
-	root.SetErr(&out)
+	root, err := newRootParser(&out)
+	require.NoError(t, err)
 	root.SetArgs(args)
-	err := root.Execute()
-	return out.String(), err
+	execErr := root.Execute(context.Background())
+	return out.String(), execErr
 }
 
 func TestUnknownCommandErrors(t *testing.T) {
@@ -37,10 +38,47 @@ func TestUnknownCommandErrors(t *testing.T) {
 }
 
 func TestExecuteReturnsZeroForHelp(t *testing.T) {
-	// Execute() reads os.Args via cobra; exercising the success path here keeps
-	// the wrapper covered without spawning a process.
-	root := newRootCmd()
-	root.SetArgs([]string{"--help"})
-	root.SetOut(&bytes.Buffer{})
-	assert.NoError(t, root.Execute())
+	out, err := runCmd(t, "--help")
+	assert.NoError(t, err)
+	assert.Contains(t, out, "githook")
+}
+
+func TestGlobalFlagBinds(t *testing.T) {
+	for _, cmd := range []string{"install", "uninstall", "list", "status"} {
+		t.Run(cmd, func(t *testing.T) {
+			root, err := newRootParser(&bytes.Buffer{})
+			require.NoError(t, err)
+			require.NoError(t, root.Parse(cmd, "--global"))
+			assert.Equal(t, cmd, root.SelectedCommand().Name())
+			assert.True(t, root.SelectedCommand().IsSet("global"))
+		})
+	}
+}
+
+func TestStrayArgRejected(t *testing.T) {
+	initRepo(t)
+	for _, cmd := range []string{"install", "uninstall", "list", "status"} {
+		t.Run(cmd, func(t *testing.T) {
+			_, err := runCmd(t, cmd, "extra")
+			assert.ErrorContains(t, err, "takes no arguments")
+		})
+	}
+}
+
+func TestExecuteReadsOSArgs(t *testing.T) {
+	t.Chdir(t.TempDir())
+	oldArgs := os.Args
+	t.Cleanup(func() { os.Args = oldArgs })
+	os.Args = []string{"githook", "--help"}
+
+	assert.Equal(t, 0, Execute())
+}
+
+func TestExecuteReturnsOneOnError(t *testing.T) {
+	t.Chdir(t.TempDir())
+	oldArgs := os.Args
+	t.Cleanup(func() { os.Args = oldArgs })
+	os.Args = []string{"githook", "frobnicate"}
+
+	assert.Equal(t, 1, Execute())
 }

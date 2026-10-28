@@ -43,7 +43,7 @@ func TestRunHook(t *testing.T) {
 
 func TestRunAsCLI(t *testing.T) {
 	// When not invoked as a hook name, Run() drops into the CLI. Invoke with a
-	// help flag so cobra exits zero without side effects.
+	// help flag so it exits zero without side effects.
 	t.Chdir(t.TempDir())
 	oldArgs := os.Args
 	t.Cleanup(func() { os.Args = oldArgs })

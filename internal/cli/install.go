@@ -1,43 +1,49 @@
 package cli
 
 import (
+	"context"
+	"fmt"
+	"io"
 	"os"
 
-	"github.com/spf13/cobra"
+	"go.vitalvas.com/gokit/xflags"
 
 	"github.com/vitalvas/githook/internal/install"
 )
 
 // newInstallCmd builds the `githook install` command.
-func newInstallCmd() *cobra.Command {
+func newInstallCmd(out io.Writer) (*xflags.Command, error) {
 	var global bool
 
-	cmd := &cobra.Command{
-		Use:   "install",
-		Short: "Install hook symlinks for all supported git hooks",
-		Long: `Create a symlink for every supported git hook, each pointing at the githook
+	cmd := xflags.NewCommand("install", "Install hook symlinks for all supported git hooks")
+	cmd.SetDescription(`Create a symlink for every supported git hook, each pointing at the githook
 binary. Existing hooks are overwritten. Installs into the current repository's
 hooks directory by default, or into the shared global core.hooksPath with
---global.`,
-		Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			binary, err := os.Executable()
-			if err != nil {
-				return err
-			}
+--global.`)
 
-			dir, err := install.Install(binary, global)
-			if err != nil {
-				return err
-			}
-
-			cmd.Printf("Installed %d hooks into %s\n", len(install.HookNames()), dir)
-
-			return nil
-		},
+	if err := cmd.BoolVar(&global, "global", "", false, "install into the global core.hooksPath instead of the current repository"); err != nil {
+		return nil, err
 	}
 
-	cmd.Flags().BoolVar(&global, "global", false, "install into the global core.hooksPath instead of the current repository")
+	cmd.SetRun(func(_ context.Context, _ *xflags.Command, args []string) error {
+		if err := requireNoArgs("install", args); err != nil {
+			return err
+		}
 
-	return cmd
+		binary, err := os.Executable()
+		if err != nil {
+			return err
+		}
+
+		dir, err := install.Install(binary, global)
+		if err != nil {
+			return err
+		}
+
+		fmt.Fprintf(out, "Installed %d hooks into %s\n", len(install.HookNames()), dir)
+
+		return nil
+	})
+
+	return cmd, nil
 }

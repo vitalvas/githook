@@ -5,7 +5,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/vitalvas/gokit/xconfig"
+	"go.vitalvas.com/gokit/xconfig"
 )
 
 // FileNames lists the config file names searched in the repository root, in

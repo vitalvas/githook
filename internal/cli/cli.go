@@ -3,31 +3,67 @@
 package cli
 
 import (
-	"github.com/spf13/cobra"
+	"context"
+	"fmt"
+	"io"
+	"os"
+
+	"go.vitalvas.com/gokit/xflags"
 )
 
-// Execute builds the root command and runs it, returning the process exit code.
+// Execute builds the root parser and runs it against os.Args, returning the
+// process exit code.
 func Execute() int {
-	root := newRootCmd()
-	if err := root.Execute(); err != nil {
+	root, err := newRootParser(os.Stdout)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "githook: %v\n", err)
+		return 1
+	}
+
+	if err := root.Execute(context.Background()); err != nil {
+		fmt.Fprintf(os.Stderr, "githook: %v\n", err)
 		return 1
 	}
 
 	return 0
 }
 
-// newRootCmd assembles the root command and its subcommands.
-func newRootCmd() *cobra.Command {
-	root := &cobra.Command{
-		Use:           "githook",
-		Short:         "Manage git hooks through a single multi-call binary",
-		SilenceUsage:  true,
-		SilenceErrors: false,
+// newRootParser assembles the root parser and its subcommands. Handler and
+// built-in help/version output are written to out.
+func newRootParser(out io.Writer) (*xflags.Parser, error) {
+	root := xflags.New("githook")
+	root.SetDescription("Manage git hooks through a single multi-call binary")
+	root.SetOutput(out)
+
+	installCmd, err := newInstallCmd(out)
+	if err != nil {
+		return nil, err
 	}
 
-	root.AddCommand(newInstallCmd())
-	root.AddCommand(newUninstallCmd())
-	root.AddCommand(newListCmd())
+	uninstallCmd, err := newUninstallCmd(out)
+	if err != nil {
+		return nil, err
+	}
 
-	return root
+	listCmds, err := newListCmds(out)
+	if err != nil {
+		return nil, err
+	}
+
+	commands := append([]*xflags.Command{installCmd, uninstallCmd}, listCmds...)
+	if err := root.AddCommand(commands...); err != nil {
+		return nil, err
+	}
+
+	return root, nil
+}
+
+// requireNoArgs reports an error when a command that takes no positional
+// arguments is given some.
+func requireNoArgs(name string, args []string) error {
+	if len(args) > 0 {
+		return fmt.Errorf("%s takes no arguments", name)
+	}
+
+	return nil
 }
