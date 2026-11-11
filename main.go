@@ -6,7 +6,7 @@ package main
 import (
 	"os"
 
-	"github.com/vitalvas/githook/internal/app"
+	"go.vitalvas.com/githook/internal/app"
 )
 
 func main() {

@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/vitalvas/githook/internal/config"
+	"go.vitalvas.com/githook/internal/config"
 )
 
 // shell is the interpreter used to run config-defined rule commands.

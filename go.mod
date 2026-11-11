@@ -1,4 +1,4 @@
-module github.com/vitalvas/githook
+module go.vitalvas.com/githook
 
 go 1.27.3
 

@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/vitalvas/githook/internal/hooks"
+	"go.vitalvas.com/githook/internal/hooks"
 )
 
 // isolateGlobalGit redirects git's global config and the user home directory to

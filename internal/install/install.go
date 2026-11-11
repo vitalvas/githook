@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/vitalvas/githook/internal/hooks"
+	"go.vitalvas.com/githook/internal/hooks"
 )
 
 // HookNames returns the list of git hook names that githook manages.

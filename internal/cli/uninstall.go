@@ -8,7 +8,7 @@ import (
 
 	"go.vitalvas.com/gokit/xflags"
 
-	"github.com/vitalvas/githook/internal/install"
+	"go.vitalvas.com/githook/internal/install"
 )
 
 // newUninstallCmd builds the `githook uninstall` command.

@@ -8,7 +8,7 @@ import (
 
 	"go.vitalvas.com/gokit/xflags"
 
-	"github.com/vitalvas/githook/internal/install"
+	"go.vitalvas.com/githook/internal/install"
 )
 
 // newListCmds builds the `githook list` command and its `status` alias. xflags

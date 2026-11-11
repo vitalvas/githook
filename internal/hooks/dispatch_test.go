@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/vitalvas/githook/internal/config"
+	"go.vitalvas.com/githook/internal/config"
 )
 
 func TestDispatch(t *testing.T) {

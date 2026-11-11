@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/vitalvas/githook/internal/cli"
-	"github.com/vitalvas/githook/internal/hooks"
+	"go.vitalvas.com/githook/internal/cli"
+	"go.vitalvas.com/githook/internal/hooks"
 )
 
 // Run dispatches based on the name the binary was invoked as. A hook name runs

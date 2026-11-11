@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/vitalvas/githook/internal/hooks"
+	"go.vitalvas.com/githook/internal/hooks"
 )
 
 // State describes the installed status of a single hook.
