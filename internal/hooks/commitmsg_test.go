@@ -2,10 +2,13 @@ package hooks
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidateCommitMessage(t *testing.T) {
@@ -28,7 +31,7 @@ func TestValidateCommitMessage(t *testing.T) {
 
 	for _, tt := range valid {
 		t.Run(fmt.Sprintf("valid/%s", tt.name), func(t *testing.T) {
-			assert.NoError(t, validateCommitMessage(tt.msg))
+			assert.NoError(t, validateCommitMessage(tt.msg, false))
 		})
 	}
 
@@ -57,10 +60,29 @@ func TestValidateCommitMessage(t *testing.T) {
 
 	for _, tt := range invalid {
 		t.Run(fmt.Sprintf("invalid/%s", tt.name), func(t *testing.T) {
-			err := validateCommitMessage(tt.msg)
+			err := validateCommitMessage(tt.msg, false)
 			assert.ErrorContains(t, err, tt.wantErr)
 		})
 	}
+}
+
+func TestValidateCommitMessageRequireScope(t *testing.T) {
+	assert.NoError(t, validateCommitMessage("fix(parser): handle empty input", true))
+	assert.ErrorContains(t, validateCommitMessage("fix: handle empty input", true), "scope is required")
+}
+
+func TestScopeRequired(t *testing.T) {
+	t.Run("marker present", func(t *testing.T) {
+		dir := t.TempDir()
+		t.Setenv("GIT_DIR", dir)
+		require.NoError(t, os.WriteFile(filepath.Join(dir, requireScopeMarker), nil, 0o600))
+		assert.True(t, scopeRequired())
+	})
+
+	t.Run("marker absent", func(t *testing.T) {
+		t.Setenv("GIT_DIR", t.TempDir())
+		assert.False(t, scopeRequired())
+	})
 }
 
 func TestHasBreakingChangeMarker(t *testing.T) {

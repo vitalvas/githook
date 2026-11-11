@@ -64,7 +64,7 @@ func commitMsgHandler(ctx *Context) error {
 		return fmt.Errorf("commit-msg: opening message file: %w", err)
 	}
 
-	if err := validateCommitMessage(stripComments(string(data))); err != nil {
+	if err := validateCommitMessage(stripComments(string(data)), scopeRequired()); err != nil {
 		return fmt.Errorf("commit-msg: %w", err)
 	}
 

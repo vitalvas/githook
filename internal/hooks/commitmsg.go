@@ -2,9 +2,15 @@ package hooks
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
+
+// requireScopeMarker is the file, relative to the git directory, whose presence
+// makes the commit-msg hook reject headers without a "(<scope>)".
+const requireScopeMarker = "require-commit-scope"
 
 // maxSubjectLength is the maximum allowed length of the subject text alone
 // (excluding the type, optional scope, and ": " prefix).
@@ -27,7 +33,8 @@ var headerPattern = regexp.MustCompile(`^([a-z]+)(?:\(([^)]+)\))?: (.+)$`)
 // no body, a non-empty subject without a trailing period, and a header no
 // longer than maxSubjectLength characters. The message is the raw file content
 // as written by the user (git comment lines are stripped before validation).
-func validateCommitMessage(message string) error {
+// When requireScope is set, a header without a scope is rejected.
+func validateCommitMessage(message string, requireScope bool) error {
 	header, err := commitHeader(message)
 	if err != nil {
 		return err
@@ -42,7 +49,11 @@ func validateCommitMessage(message string) error {
 		return fmt.Errorf("message must follow %q or %q", "<type>: <subject>", "<type>(<scope>): <subject>")
 	}
 
-	commitType, subject := groups[1], groups[3]
+	commitType, scope, subject := groups[1], groups[2], groups[3]
+
+	if requireScope && scope == "" {
+		return fmt.Errorf("scope is required; use %q", "<type>(<scope>): <subject>")
+	}
 
 	if len(subject) > maxSubjectLength {
 		return fmt.Errorf("subject must be at most %d characters, got %d", maxSubjectLength, len(subject))
@@ -101,6 +112,13 @@ func hasBreakingChangeMarker(header string) bool {
 	}
 
 	return strings.Contains(prefix, "!")
+}
+
+// scopeRequired reports whether the require-scope marker file exists in the git
+// directory.
+func scopeRequired() bool {
+	_, err := os.Stat(filepath.Join(gitDir(), requireScopeMarker))
+	return err == nil
 }
 
 // isAllowedType reports whether t is one of the accepted conventional-commit

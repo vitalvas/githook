@@ -65,6 +65,14 @@ Enforces a single-line conventional-commit policy. The message must:
 - be at most 72 characters for the whole header;
 - have a non-empty subject with no trailing period.
 
+The scope is optional by default. It becomes mandatory when the file
+`require-commit-scope` exists in the git directory:
+
+```bash
+touch .git/require-commit-scope    # require <type>(<scope>): <subject>
+rm .git/require-commit-scope       # make the scope optional again
+```
+
 ### pre-commit
 
 Runs `yake run` (the project's tests and policy checks) before a commit. When

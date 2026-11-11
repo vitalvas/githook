@@ -22,6 +22,10 @@ func TestHandlerFor(t *testing.T) {
 }
 
 func TestCommitMsgHandler(t *testing.T) {
+	// Point GIT_DIR at an empty directory so the require-scope marker is absent
+	// unless a subtest creates it.
+	t.Setenv("GIT_DIR", t.TempDir())
+
 	writeMsg := func(t *testing.T, content string) string {
 		t.Helper()
 		path := filepath.Join(t.TempDir(), "COMMIT_EDITMSG")
@@ -62,6 +66,15 @@ func TestCommitMsgHandler(t *testing.T) {
 	t.Run("rejects breaking change marker", func(t *testing.T) {
 		path := writeMsg(t, "feat!: drop support\n")
 		assert.ErrorContains(t, commitMsgHandler(newCtx(path)), "breaking change")
+	})
+
+	t.Run("rejects missing scope when marker exists", func(t *testing.T) {
+		dir := t.TempDir()
+		t.Setenv("GIT_DIR", dir)
+		require.NoError(t, os.WriteFile(filepath.Join(dir, requireScopeMarker), nil, 0o600))
+
+		path := writeMsg(t, "fix: no scope\n")
+		assert.ErrorContains(t, commitMsgHandler(newCtx(path)), "scope is required")
 	})
 
 	t.Run("errors without argument", func(t *testing.T) {
